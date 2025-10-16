@@ -8,16 +8,10 @@ const projectController = {
     const userRole = req.session.userRole;
 
     // Business rules:
-    // - Staff users (Admin and Supervisor) can create projects with or without ideas
-    // - Students and Community users cannot create projects without ideas
+    // - Only Staff users (Admin and Supervisor) can create projects
+    // - Staff can create projects with or without ideas
     const isStaff = ['Staff-Admin', 'Staff-Supervisor'].includes(userRole);
     
-    if (!isStaff && !ideaId) {
-      return res.status(403).json({ 
-        error: 'Students and Community users must create projects from existing ideas' 
-      });
-    }
-
     if (!isStaff) {
       return res.status(403).json({ 
         error: 'Only Staff users can create projects' 

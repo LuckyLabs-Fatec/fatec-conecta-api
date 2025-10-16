@@ -20,6 +20,20 @@ A RESTful API for managing users, ideas, and projects with role-based access con
 npm install
 ```
 
+## Configuration
+
+Copy the `.env.example` file to `.env` and configure your environment variables:
+
+```bash
+cp .env.example .env
+```
+
+### Environment Variables
+
+- `PORT`: Server port (default: 3000)
+- `NODE_ENV`: Environment mode (development/production)
+- `SESSION_SECRET`: Secret key for session encryption (required in production)
+
 ## Running the Application
 
 ```bash

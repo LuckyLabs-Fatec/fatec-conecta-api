@@ -149,12 +149,12 @@ const userController = {
         values.push(role);
       }
 
-      updateFields.push('updated_at = CURRENT_TIMESTAMP');
-      values.push(id);
-
-      if (updateFields.length === 1) {
+      if (updateFields.length === 0) {
         return res.status(400).json({ error: 'No fields to update' });
       }
+
+      updateFields.push('updated_at = CURRENT_TIMESTAMP');
+      values.push(id);
 
       db.run(
         `UPDATE users SET ${updateFields.join(', ')} WHERE id = ?`,
