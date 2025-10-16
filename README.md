@@ -238,3 +238,25 @@ DELETE /api/projects/:id
 - SQLite3
 - express-session (for session management)
 - bcryptjs (for password hashing)
+
+## Security
+
+See [SECURITY.md](SECURITY.md) for security considerations and production recommendations.
+
+## Testing
+
+A comprehensive test script is provided to verify all functionality:
+
+```bash
+# Start the server in one terminal
+npm start
+
+# In another terminal, run the test script
+./test-api.sh
+```
+
+The test script demonstrates:
+- User registration and authentication
+- Role-based access control
+- CRUD operations for all entities
+- Authorization enforcement
