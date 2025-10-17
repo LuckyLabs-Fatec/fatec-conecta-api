@@ -21,6 +21,8 @@ db.serialize(() => {
       email TEXT UNIQUE NOT NULL,
       password TEXT NOT NULL,
       role TEXT NOT NULL CHECK(role IN ('Student', 'Community', 'Staff-Admin', 'Staff-Supervisor')),
+      failed_login_attempts INTEGER DEFAULT 0,
+      account_locked_until DATETIME,
       created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
       updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
     )

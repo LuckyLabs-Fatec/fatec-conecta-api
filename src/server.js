@@ -1,6 +1,7 @@
 const express = require('express');
 const sessionMiddleware = require('./config/session');
 const db = require('./config/database');
+const { apiLimiter } = require('./middleware/rateLimiter');
 
 // Import routes
 const userRoutes = require('./routes/userRoutes');
@@ -14,6 +15,9 @@ const PORT = process.env.PORT || 3000;
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(sessionMiddleware);
+
+// Apply rate limiting to all API routes
+app.use('/api/', apiLimiter);
 
 // Routes
 app.use('/api/users', userRoutes);

@@ -38,41 +38,71 @@ const userController = {
   },
 
   // Login
-  login: (req, res) => {
+  login: async (req, res) => {
     const { username, password } = req.body;
 
-    db.get('SELECT * FROM users WHERE username = ?', [username], async (err, user) => {
-      if (err) {
-        return res.status(500).json({ error: err.message });
-      }
-      if (!user) {
-        return res.status(401).json({ error: 'Invalid credentials' });
+    try {
+      // Import account lockout functions
+      const {
+        checkAccountLockout,
+        recordFailedLogin,
+        resetFailedLogins
+      } = require('../middleware/accountLockout');
+
+      // Check if account is locked
+      const lockoutStatus = await checkAccountLockout(username);
+      if (lockoutStatus.isLocked) {
+        return res.status(403).json({
+          error: 'Account is locked due to too many failed login attempts',
+          remainingMinutes: lockoutStatus.remainingMinutes
+        });
       }
 
-      try {
-        const isValidPassword = await bcrypt.compare(password, user.password);
-        if (!isValidPassword) {
+      db.get('SELECT * FROM users WHERE username = ?', [username], async (err, user) => {
+        if (err) {
+          return res.status(500).json({ error: err.message });
+        }
+        if (!user) {
           return res.status(401).json({ error: 'Invalid credentials' });
         }
 
-        // Set session
-        req.session.userId = user.id;
-        req.session.userRole = user.role;
-        req.session.username = user.username;
-
-        res.json({ 
-          message: 'Login successful',
-          user: {
-            id: user.id,
-            username: user.username,
-            email: user.email,
-            role: user.role
+        try {
+          const isValidPassword = await bcrypt.compare(password, user.password);
+          if (!isValidPassword) {
+            // Record failed login attempt
+            const result = await recordFailedLogin(username);
+            if (result && result.accountLocked) {
+              return res.status(403).json({
+                error: 'Account is locked due to too many failed login attempts. Please try again after 30 minutes.'
+              });
+            }
+            return res.status(401).json({ error: 'Invalid credentials' });
           }
-        });
-      } catch (error) {
-        res.status(500).json({ error: error.message });
-      }
-    });
+
+          // Reset failed login attempts on successful login
+          await resetFailedLogins(username);
+
+          // Set session
+          req.session.userId = user.id;
+          req.session.userRole = user.role;
+          req.session.username = user.username;
+
+          res.json({
+            message: 'Login successful',
+            user: {
+              id: user.id,
+              username: user.username,
+              email: user.email,
+              role: user.role
+            }
+          });
+        } catch (error) {
+          res.status(500).json({ error: error.message });
+        }
+      });
+    } catch (error) {
+      res.status(500).json({ error: error.message });
+    }
   },
 
   // Logout
