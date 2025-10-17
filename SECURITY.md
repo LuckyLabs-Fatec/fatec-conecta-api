@@ -39,8 +39,9 @@ This document outlines security features implemented and known limitations.
    - Validates email format, username format, password length, etc.
    - Applied to all routes (users, ideas, projects)
    ```javascript
-   // See src/middleware/validation.js
-   router.post('/register', validateUserRegistration, ...);
+   // See src/middleware/validation.js and routes
+   router.post('/register', authLimiter, logAuthAttempt, validateUserRegistration, userController.register);
+   router.post('/login', authLimiter, logAuthAttempt, validateUserLogin, userController.login);
    ```
 
 3. **Authentication Logging** ✅ Implemented:
@@ -49,7 +50,9 @@ This document outlines security features implemented and known limitations.
    - Enables monitoring for suspicious patterns
    ```javascript
    // See src/middleware/logger.js
-   router.post('/login', logAuthAttempt, ...);
+   // Applied to authentication routes in src/routes/userRoutes.js
+   router.post('/login', authLimiter, logAuthAttempt, validateUserLogin, userController.login);
+   router.post('/register', authLimiter, logAuthAttempt, validateUserRegistration, userController.register);
    ```
 
 4. **Account Lockout** ✅ Implemented:
