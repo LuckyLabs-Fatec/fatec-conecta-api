@@ -9,57 +9,75 @@ This document outlines security features implemented and known limitations.
 ✅ **Environment Variable Protection**: SESSION_SECRET must be set in production
 ✅ **Role-based Access Control**: Middleware enforces proper authorization
 ✅ **SQL Injection Prevention**: Using parameterized queries throughout
+✅ **Rate Limiting**: Implemented for all API routes (100 req/15min) and authentication endpoints (5 req/15min)
+✅ **Input Validation**: Using express-validator to validate all user inputs
+✅ **Authentication Logging**: All authentication attempts are logged with timestamp, IP, username, and status
+✅ **Account Lockout**: Accounts are locked for 30 minutes after 5 failed login attempts
 
 ## Known Limitations (For Production Consideration)
-
-⚠️ **Rate Limiting**: Currently not implemented
-- **Risk**: API endpoints are vulnerable to DoS attacks
-- **Recommendation**: Implement rate limiting middleware (e.g., express-rate-limit)
-- **Example**: Limit login attempts, API calls per IP address
 
 ⚠️ **CSRF Protection**: Currently not implemented
 - **Risk**: Cross-Site Request Forgery attacks possible
 - **Recommendation**: Implement CSRF tokens (e.g., csurf middleware) for state-changing operations
 - **Note**: REST APIs often use other authentication methods (JWT, OAuth) instead of sessions to avoid CSRF
 
-## Recommendations for Production
+## Security Implementation Details
 
-1. **Add Rate Limiting**:
+1. **Rate Limiting** ✅ Implemented:
+   - General API limiter: 100 requests per 15 minutes per IP
+   - Authentication limiter: 5 requests per 15 minutes per IP
+   - Protects against DoS and brute force attacks
    ```javascript
-   const rateLimit = require('express-rate-limit');
-   const limiter = rateLimit({
-     windowMs: 15 * 60 * 1000, // 15 minutes
-     max: 100 // limit each IP to 100 requests per windowMs
-   });
-   app.use('/api/', limiter);
+   // Applied in src/middleware/rateLimiter.js
+   app.use('/api/', apiLimiter);
+   router.post('/login', authLimiter, ...);
+   router.post('/register', authLimiter, ...);
    ```
 
-2. **Add CSRF Protection** (if continuing to use session-based auth):
+2. **Input Validation** ✅ Implemented:
+   - Using express-validator for all user inputs
+   - Validates email format, username format, password length, etc.
+   - Applied to all routes (users, ideas, projects)
+   ```javascript
+   // See src/middleware/validation.js
+   router.post('/register', validateUserRegistration, ...);
+   ```
+
+3. **Authentication Logging** ✅ Implemented:
+   - Logs all login/register attempts
+   - Includes timestamp, IP address, username, and status code
+   - Enables monitoring for suspicious patterns
+   ```javascript
+   // See src/middleware/logger.js
+   router.post('/login', logAuthAttempt, ...);
+   ```
+
+4. **Account Lockout** ✅ Implemented:
+   - Locks account after 5 failed login attempts
+   - 30-minute lockout duration
+   - Automatic unlock after lockout period expires
+   - Database tracks: failed_login_attempts, account_locked_until
+   ```javascript
+   // See src/middleware/accountLockout.js
+   ```
+
+## Recommendations for Production
+
+1. **Add CSRF Protection** (if continuing to use session-based auth):
    ```javascript
    const csrf = require('csurf');
    app.use(csrf({ cookie: true }));
    ```
 
-3. **Consider JWT Authentication** instead of sessions for a REST API:
+2. **Consider JWT Authentication** instead of sessions for a REST API:
    - Avoids CSRF vulnerabilities
    - Better for scaling across multiple servers
    - More suitable for mobile/SPA clients
 
-4. **Add Input Validation**:
-   - Use validation libraries (e.g., express-validator, joi)
-   - Validate all user inputs before processing
-
-5. **Add Request Logging**:
-   - Log all authentication attempts
-   - Monitor for suspicious patterns
-
-6. **Use HTTPS in Production**:
+3. **Use HTTPS in Production**:
    - Secure cookies only work over HTTPS
    - Protect data in transit
-
-7. **Implement Account Lockout**:
-   - Lock accounts after failed login attempts
-   - Require admin intervention or time-based unlock
+   - Required for the session cookie security settings to be effective
 
 ## Current Use Case
 
