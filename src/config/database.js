@@ -17,11 +17,11 @@ db.serialize(() => {
   db.run(`
     CREATE TABLE IF NOT EXISTS users (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
-      username TEXT UNIQUE NOT NULL,
-      email TEXT UNIQUE NOT NULL,
-      password TEXT NOT NULL,
+      username TEXT UNIQUE NOT NULL CHECK(length(username) >= 3 AND length(username) <= 50),
+      email TEXT UNIQUE NOT NULL CHECK(length(email) <= 255),
+      password TEXT NOT NULL CHECK(length(password) <= 255),
       role TEXT NOT NULL CHECK(role IN ('Student', 'Community', 'Staff-Admin', 'Staff-Supervisor')),
-      failed_login_attempts INTEGER DEFAULT 0,
+      failed_login_attempts INTEGER DEFAULT 0 CHECK(failed_login_attempts >= 0),
       account_locked_until DATETIME,
       created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
       updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
@@ -32,8 +32,8 @@ db.serialize(() => {
   db.run(`
     CREATE TABLE IF NOT EXISTS ideas (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
-      title TEXT NOT NULL,
-      description TEXT NOT NULL,
+      title TEXT NOT NULL CHECK(length(title) >= 3 AND length(title) <= 200),
+      description TEXT NOT NULL CHECK(length(description) >= 10),
       user_id INTEGER NOT NULL,
       created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
       updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
@@ -45,8 +45,8 @@ db.serialize(() => {
   db.run(`
     CREATE TABLE IF NOT EXISTS projects (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
-      title TEXT NOT NULL,
-      description TEXT NOT NULL,
+      title TEXT NOT NULL CHECK(length(title) >= 3 AND length(title) <= 200),
+      description TEXT NOT NULL CHECK(length(description) >= 10),
       user_id INTEGER NOT NULL,
       idea_id INTEGER,
       created_at DATETIME DEFAULT CURRENT_TIMESTAMP,

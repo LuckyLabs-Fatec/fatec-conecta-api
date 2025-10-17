@@ -2,6 +2,7 @@ const express = require('express');
 const sessionMiddleware = require('./config/session');
 const db = require('./config/database');
 const { apiLimiter } = require('./middleware/rateLimiter');
+const { csrfProtection, provideCsrfToken, getCsrfToken } = require('./middleware/csrf');
 
 // Import routes
 const userRoutes = require('./routes/userRoutes');
@@ -16,8 +17,17 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(sessionMiddleware);
 
+// Provide CSRF token to all requests
+app.use(provideCsrfToken);
+
 // Apply rate limiting to all API routes
 app.use('/api/', apiLimiter);
+
+// Apply CSRF protection to all API routes
+app.use('/api/', csrfProtection);
+
+// CSRF token endpoint (for clients to get the token)
+app.get('/api/csrf-token', getCsrfToken);
 
 // Routes
 app.use('/api/users', userRoutes);
@@ -32,7 +42,8 @@ app.get('/', (req, res) => {
     endpoints: {
       users: '/api/users',
       ideas: '/api/ideas',
-      projects: '/api/projects'
+      projects: '/api/projects',
+      csrfToken: '/api/csrf-token'
     }
   });
 });

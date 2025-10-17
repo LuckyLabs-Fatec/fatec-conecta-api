@@ -4,7 +4,7 @@ This document outlines security features implemented and known limitations.
 
 ## Implemented Security Features
 
-✅ **Password Hashing**: All passwords are hashed using bcryptjs before storage
+✅ **Password Hashing with Salt**: All passwords are hashed using bcryptjs with automatic salt generation (10 rounds) before storage
 ✅ **Session-based Authentication**: Using express-session with secure cookies in production
 ✅ **Environment Variable Protection**: SESSION_SECRET must be set in production
 ✅ **Role-based Access Control**: Middleware enforces proper authorization
@@ -13,13 +13,8 @@ This document outlines security features implemented and known limitations.
 ✅ **Input Validation**: Using express-validator to validate all user inputs
 ✅ **Authentication Logging**: All authentication attempts are logged with timestamp, IP, username, and status
 ✅ **Account Lockout**: Accounts are locked for 30 minutes after 5 failed login attempts
-
-## Known Limitations (For Production Consideration)
-
-⚠️ **CSRF Protection**: Currently not implemented
-- **Risk**: Cross-Site Request Forgery attacks possible
-- **Recommendation**: Implement CSRF tokens (e.g., csurf middleware) for state-changing operations
-- **Note**: REST APIs often use other authentication methods (JWT, OAuth) instead of sessions to avoid CSRF
+✅ **CSRF Protection**: Custom CSRF token implementation for session-based authentication
+✅ **Database Constraints**: Field length limits enforced at database level for data integrity
 
 ## Security Implementation Details
 
@@ -64,20 +59,38 @@ This document outlines security features implemented and known limitations.
    // See src/middleware/accountLockout.js
    ```
 
-## Recommendations for Production
-
-1. **Add CSRF Protection** (if continuing to use session-based auth):
+5. **CSRF Protection** ✅ Implemented:
+   - Custom CSRF token implementation using crypto module
+   - Token stored in session and validated on state-changing requests
+   - GET /api/csrf-token endpoint to retrieve token
+   - Token can be sent via request body (_csrf), X-CSRF-Token header, or CSRF-Token header
+   - Uses constant-time comparison to prevent timing attacks
    ```javascript
-   const csrf = require('csurf');
-   app.use(csrf({ cookie: true }));
+   // See src/middleware/csrf.js
+   // Applied to all API routes in src/server.js
+   app.use('/api/', csrfProtection);
    ```
 
-2. **Consider JWT Authentication** instead of sessions for a REST API:
-   - Avoids CSRF vulnerabilities
-   - Better for scaling across multiple servers
-   - More suitable for mobile/SPA clients
+6. **Password Hashing with Salt** ✅ Implemented:
+   - bcryptjs automatically generates salt with 10 rounds
+   - Each password has unique salt embedded in the hash
+   - Industry-standard security for password storage
+   ```javascript
+   // In src/controllers/userController.js
+   const hashedPassword = await bcrypt.hash(password, 10); // 10 = salt rounds
+   ```
 
-3. **Use HTTPS in Production**:
+7. **Database Field Constraints** ✅ Implemented:
+   - Username: 3-50 characters
+   - Email: max 255 characters
+   - Password (hashed): max 255 characters
+   - Title fields: 3-200 characters
+   - Description fields: minimum 10 characters
+   - Constraints enforced at database level for data integrity
+
+## Recommendations for Production
+
+1. **Use HTTPS in Production**:
    - Secure cookies only work over HTTPS
    - Protect data in transit
    - Required for the session cookie security settings to be effective
