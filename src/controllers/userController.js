@@ -2,33 +2,31 @@ const bcrypt = require('bcryptjs');
 const db = require('../config/database');
 
 const userController = {
-  // Register a new user
+  // Register a new user into Usuario table
   register: async (req, res) => {
-    const { username, email, password, role } = req.body;
+    const { username, email, password, role } = req.body; // username maps to nome, role -> perfil
 
-    // Validate role
     const validRoles = ['Student', 'Community', 'Staff-Admin', 'Staff-Supervisor'];
     if (!validRoles.includes(role)) {
       return res.status(400).json({ error: 'Invalid role' });
     }
 
     try {
-      // Hash password
       const hashedPassword = await bcrypt.hash(password, 10);
 
       db.run(
-        'INSERT INTO users (username, email, password, role) VALUES (?, ?, ?, ?)',
+        'INSERT INTO Usuario (nome, email, senha, perfil) VALUES (?, ?, ?, ?)',
         [username, email, hashedPassword, role],
         function (err) {
           if (err) {
             if (err.message.includes('UNIQUE constraint failed')) {
-              return res.status(400).json({ error: 'Username or email already exists' });
+              return res.status(400).json({ error: 'Name or email already exists' });
             }
             return res.status(500).json({ error: err.message });
           }
-          res.status(201).json({ 
-            message: 'User registered successfully', 
-            userId: this.lastID 
+          res.status(201).json({
+            message: 'User registered successfully',
+            id_usuario: this.lastID
           });
         }
       );
@@ -37,11 +35,11 @@ const userController = {
     }
   },
 
-  // Login
+  // Login using Usuario table (username -> nome)
   login: (req, res) => {
     const { username, password } = req.body;
 
-    db.get('SELECT * FROM users WHERE username = ?', [username], async (err, user) => {
+    db.get('SELECT * FROM Usuario WHERE nome = ?', [username], async (err, user) => {
       if (err) {
         return res.status(500).json({ error: err.message });
       }
@@ -50,23 +48,23 @@ const userController = {
       }
 
       try {
-        const isValidPassword = await bcrypt.compare(password, user.password);
+        const isValidPassword = await bcrypt.compare(password, user.senha);
         if (!isValidPassword) {
           return res.status(401).json({ error: 'Invalid credentials' });
         }
 
         // Set session
-        req.session.userId = user.id;
-        req.session.userRole = user.role;
-        req.session.username = user.username;
+        req.session.userId = user.id_usuario;
+        req.session.userRole = user.perfil;
+        req.session.username = user.nome;
 
-        res.json({ 
+        res.json({
           message: 'Login successful',
           user: {
-            id: user.id,
-            username: user.username,
+            id_usuario: user.id_usuario,
+            nome: user.nome,
             email: user.email,
-            role: user.role
+            perfil: user.perfil
           }
         });
       } catch (error) {
@@ -85,9 +83,9 @@ const userController = {
     });
   },
 
-  // Get all users
+  // Get all users from Usuario table
   getAll: (req, res) => {
-    db.all('SELECT id, username, email, role, created_at FROM users', [], (err, users) => {
+    db.all('SELECT id_usuario, nome, email, perfil FROM Usuario', [], (err, users) => {
       if (err) {
         return res.status(500).json({ error: err.message });
       }
@@ -100,7 +98,7 @@ const userController = {
     const { id } = req.params;
 
     db.get(
-      'SELECT id, username, email, role, created_at FROM users WHERE id = ?',
+      'SELECT id_usuario, nome, email, perfil FROM Usuario WHERE id_usuario = ?',
       [id],
       (err, user) => {
         if (err) {
@@ -116,10 +114,9 @@ const userController = {
 
   // Update user
   update: async (req, res) => {
-    const { id } = req.params;
-    const { username, email, password, role } = req.body;
+    const { id } = req.params; // id_usuario
+    const { username, email, password, role } = req.body; // username -> nome, role -> perfil
 
-    // Validate role if provided
     if (role) {
       const validRoles = ['Student', 'Community', 'Staff-Admin', 'Staff-Supervisor'];
       if (!validRoles.includes(role)) {
@@ -132,7 +129,7 @@ const userController = {
       let values = [];
 
       if (username) {
-        updateFields.push('username = ?');
+        updateFields.push('nome = ?');
         values.push(username);
       }
       if (email) {
@@ -141,11 +138,11 @@ const userController = {
       }
       if (password) {
         const hashedPassword = await bcrypt.hash(password, 10);
-        updateFields.push('password = ?');
+        updateFields.push('senha = ?');
         values.push(hashedPassword);
       }
       if (role) {
-        updateFields.push('role = ?');
+        updateFields.push('perfil = ?');
         values.push(role);
       }
 
@@ -153,16 +150,15 @@ const userController = {
         return res.status(400).json({ error: 'No fields to update' });
       }
 
-      updateFields.push('updated_at = CURRENT_TIMESTAMP');
       values.push(id);
 
       db.run(
-        `UPDATE users SET ${updateFields.join(', ')} WHERE id = ?`,
+        `UPDATE Usuario SET ${updateFields.join(', ')} WHERE id_usuario = ?`,
         values,
         function (err) {
           if (err) {
             if (err.message.includes('UNIQUE constraint failed')) {
-              return res.status(400).json({ error: 'Username or email already exists' });
+              return res.status(400).json({ error: 'Name or email already exists' });
             }
             return res.status(500).json({ error: err.message });
           }
@@ -181,7 +177,7 @@ const userController = {
   delete: (req, res) => {
     const { id } = req.params;
 
-    db.run('DELETE FROM users WHERE id = ?', [id], function (err) {
+    db.run('DELETE FROM Usuario WHERE id_usuario = ?', [id], function (err) {
       if (err) {
         return res.status(500).json({ error: err.message });
       }

@@ -1,193 +1,144 @@
 const db = require('../config/database');
 
 const projectController = {
-  // Create a new project
+  // Create a new Projeto (staff only). Requires fk_curso_id_curso and fk_proposta_id_proposta
   create: (req, res) => {
-    const { title, description, ideaId } = req.body;
-    const userId = req.session.userId;
+    const { titulo, descricao, prazo, status, feedback, fk_curso_id_curso, fk_proposta_id_proposta } = req.body;
     const userRole = req.session.userRole;
 
-    // Business rules:
-    // - Only Staff users (Admin and Supervisor) can create projects
-    // - Staff can create projects with or without ideas
     const isStaff = ['Staff-Admin', 'Staff-Supervisor'].includes(userRole);
-    
     if (!isStaff) {
-      return res.status(403).json({ 
-        error: 'Only Staff users can create projects' 
-      });
+      return res.status(403).json({ error: 'Only Staff users can create projects' });
     }
 
-    // If ideaId is provided, verify it exists
-    if (ideaId) {
-      db.get('SELECT * FROM ideas WHERE id = ?', [ideaId], (err, idea) => {
-        if (err) {
-          return res.status(500).json({ error: err.message });
-        }
-        if (!idea) {
-          return res.status(404).json({ error: 'Idea not found' });
-        }
+    // Validate foreign keys exist
+    db.get('SELECT id_curso FROM Curso WHERE id_curso = ?', [fk_curso_id_curso], (err, curso) => {
+      if (err) return res.status(500).json({ error: err.message });
+      if (!curso) return res.status(400).json({ error: 'Curso not found' });
 
-        // Create project with idea
+      db.get('SELECT id_proposta FROM Proposta WHERE id_proposta = ?', [fk_proposta_id_proposta], (err2, prop) => {
+        if (err2) return res.status(500).json({ error: err2.message });
+        if (!prop) return res.status(400).json({ error: 'Proposta not found' });
+
         db.run(
-          'INSERT INTO projects (title, description, user_id, idea_id) VALUES (?, ?, ?, ?)',
-          [title, description, userId, ideaId],
-          function (err) {
-            if (err) {
-              return res.status(500).json({ error: err.message });
-            }
-            res.status(201).json({ 
-              message: 'Project created successfully from idea', 
-              projectId: this.lastID 
-            });
+          'INSERT INTO Projeto (titulo, descricao, prazo, status, feedback, fk_curso_id_curso, fk_proposta_id_proposta) VALUES (?, ?, ?, ?, ?, ?, ?)',
+          [titulo, descricao || null, prazo || null, status || null, feedback || null, fk_curso_id_curso, fk_proposta_id_proposta],
+          function (err3) {
+            if (err3) return res.status(500).json({ error: err3.message });
+            res.status(201).json({ message: 'Projeto criado com sucesso', id_projeto: this.lastID });
           }
         );
       });
-    } else {
-      // Create project without idea (staff only)
-      db.run(
-        'INSERT INTO projects (title, description, user_id) VALUES (?, ?, ?)',
-        [title, description, userId],
-        function (err) {
-          if (err) {
-            return res.status(500).json({ error: err.message });
-          }
-          res.status(201).json({ 
-            message: 'Project created successfully', 
-            projectId: this.lastID 
-          });
-        }
-      );
-    }
-  },
-
-  // Get all projects
-  getAll: (req, res) => {
-    db.all(
-      `SELECT projects.*, users.username, users.role,
-              ideas.title as idea_title
-       FROM projects 
-       JOIN users ON projects.user_id = users.id
-       LEFT JOIN ideas ON projects.idea_id = ideas.id`,
-      [],
-      (err, projects) => {
-        if (err) {
-          return res.status(500).json({ error: err.message });
-        }
-        res.json(projects);
-      }
-    );
-  },
-
-  // Get project by ID
-  getById: (req, res) => {
-    const { id } = req.params;
-
-    db.get(
-      `SELECT projects.*, users.username, users.role,
-              ideas.title as idea_title, ideas.description as idea_description
-       FROM projects 
-       JOIN users ON projects.user_id = users.id
-       LEFT JOIN ideas ON projects.idea_id = ideas.id
-       WHERE projects.id = ?`,
-      [id],
-      (err, project) => {
-        if (err) {
-          return res.status(500).json({ error: err.message });
-        }
-        if (!project) {
-          return res.status(404).json({ error: 'Project not found' });
-        }
-        res.json(project);
-      }
-    );
-  },
-
-  // Update project
-  update: (req, res) => {
-    const { id } = req.params;
-    const { title, description, ideaId } = req.body;
-    const userId = req.session.userId;
-    const userRole = req.session.userRole;
-
-    // Check if user has permission to update
-    db.get('SELECT * FROM projects WHERE id = ?', [id], (err, project) => {
-      if (err) {
-        return res.status(500).json({ error: err.message });
-      }
-      if (!project) {
-        return res.status(404).json({ error: 'Project not found' });
-      }
-
-      // Only the creator or staff can update
-      const isStaff = ['Staff-Admin', 'Staff-Supervisor'].includes(userRole);
-      if (project.user_id !== userId && !isStaff) {
-        return res.status(403).json({ error: 'You do not have permission to update this project' });
-      }
-
-      let updateFields = [];
-      let values = [];
-
-      if (title) {
-        updateFields.push('title = ?');
-        values.push(title);
-      }
-      if (description) {
-        updateFields.push('description = ?');
-        values.push(description);
-      }
-      if (ideaId !== undefined) {
-        updateFields.push('idea_id = ?');
-        values.push(ideaId);
-      }
-
-      if (updateFields.length === 0) {
-        return res.status(400).json({ error: 'No fields to update' });
-      }
-
-      updateFields.push('updated_at = CURRENT_TIMESTAMP');
-      values.push(id);
-
-      db.run(
-        `UPDATE projects SET ${updateFields.join(', ')} WHERE id = ?`,
-        values,
-        function (err) {
-          if (err) {
-            return res.status(500).json({ error: err.message });
-          }
-          res.json({ message: 'Project updated successfully' });
-        }
-      );
     });
   },
 
-  // Delete project
+  // Get all projetos with joins to Curso and Proposta
+  getAll: (req, res) => {
+    db.all(
+      `SELECT pj.*, c.nome as curso_nome, pr.titulo as proposta_titulo
+       FROM Projeto pj
+       JOIN Curso c ON pj.fk_curso_id_curso = c.id_curso
+       JOIN Proposta pr ON pj.fk_proposta_id_proposta = pr.id_proposta`,
+      [],
+      (err, rows) => {
+        if (err) return res.status(500).json({ error: err.message });
+        res.json(rows);
+      }
+    );
+  },
+
+  // Get projeto by id
+  getById: (req, res) => {
+    const { id } = req.params;
+    db.get(
+      `SELECT pj.*, c.nome as curso_nome, pr.titulo as proposta_titulo, pr.descricao as proposta_descricao
+       FROM Projeto pj
+       JOIN Curso c ON pj.fk_curso_id_curso = c.id_curso
+       JOIN Proposta pr ON pj.fk_proposta_id_proposta = pr.id_proposta
+       WHERE pj.id_projeto = ?`,
+      [id],
+      (err, row) => {
+        if (err) return res.status(500).json({ error: err.message });
+        if (!row) return res.status(404).json({ error: 'Projeto não encontrado' });
+        res.json(row);
+      }
+    );
+  },
+
+  // Update projeto (staff only)
+  update: (req, res) => {
+    const { id } = req.params;
+    const { titulo, descricao, prazo, status, feedback, fk_curso_id_curso, fk_proposta_id_proposta } = req.body;
+    const userRole = req.session.userRole;
+    const isStaff = ['Staff-Admin', 'Staff-Supervisor'].includes(userRole);
+    if (!isStaff) return res.status(403).json({ error: 'Only Staff users can update projects' });
+
+    db.get('SELECT * FROM Projeto WHERE id_projeto = ?', [id], (err, projeto) => {
+      if (err) return res.status(500).json({ error: err.message });
+      if (!projeto) return res.status(404).json({ error: 'Projeto não encontrado' });
+
+      const updateFields = [];
+      const values = [];
+      if (titulo !== undefined) { updateFields.push('titulo = ?'); values.push(titulo); }
+      if (descricao !== undefined) { updateFields.push('descricao = ?'); values.push(descricao); }
+      if (prazo !== undefined) { updateFields.push('prazo = ?'); values.push(prazo); }
+      if (status !== undefined) { updateFields.push('status = ?'); values.push(status); }
+      if (feedback !== undefined) { updateFields.push('feedback = ?'); values.push(feedback); }
+      if (fk_curso_id_curso !== undefined) { updateFields.push('fk_curso_id_curso = ?'); values.push(fk_curso_id_curso); }
+      if (fk_proposta_id_proposta !== undefined) { updateFields.push('fk_proposta_id_proposta = ?'); values.push(fk_proposta_id_proposta); }
+
+      if (updateFields.length === 0) return res.status(400).json({ error: 'No fields to update' });
+
+      const runUpdate = () => {
+        values.push(id);
+        db.run(
+          `UPDATE Projeto SET ${updateFields.join(', ')} WHERE id_projeto = ?`,
+          values,
+          function (err2) {
+            if (err2) return res.status(500).json({ error: err2.message });
+            res.json({ message: 'Projeto atualizado com sucesso' });
+          }
+        );
+      };
+
+      // If FKs provided, validate
+      if (fk_curso_id_curso !== undefined) {
+        db.get('SELECT id_curso FROM Curso WHERE id_curso = ?', [fk_curso_id_curso], (e1, c) => {
+          if (e1) return res.status(500).json({ error: e1.message });
+          if (!c) return res.status(400).json({ error: 'Curso not found' });
+          if (fk_proposta_id_proposta !== undefined) {
+            db.get('SELECT id_proposta FROM Proposta WHERE id_proposta = ?', [fk_proposta_id_proposta], (e2, p) => {
+              if (e2) return res.status(500).json({ error: e2.message });
+              if (!p) return res.status(400).json({ error: 'Proposta not found' });
+              runUpdate();
+            });
+          } else {
+            runUpdate();
+          }
+        });
+      } else if (fk_proposta_id_proposta !== undefined) {
+        db.get('SELECT id_proposta FROM Proposta WHERE id_proposta = ?', [fk_proposta_id_proposta], (e2, p) => {
+          if (e2) return res.status(500).json({ error: e2.message });
+          if (!p) return res.status(400).json({ error: 'Proposta not found' });
+          runUpdate();
+        });
+      } else {
+        runUpdate();
+      }
+    });
+  },
+
+  // Delete projeto (staff only)
   delete: (req, res) => {
     const { id } = req.params;
-    const userId = req.session.userId;
     const userRole = req.session.userRole;
+    const isStaff = ['Staff-Admin', 'Staff-Supervisor'].includes(userRole);
+    if (!isStaff) return res.status(403).json({ error: 'Only Staff users can delete projects' });
 
-    // Check if user has permission to delete
-    db.get('SELECT * FROM projects WHERE id = ?', [id], (err, project) => {
-      if (err) {
-        return res.status(500).json({ error: err.message });
-      }
-      if (!project) {
-        return res.status(404).json({ error: 'Project not found' });
-      }
-
-      // Only the creator or staff can delete
-      const isStaff = ['Staff-Admin', 'Staff-Supervisor'].includes(userRole);
-      if (project.user_id !== userId && !isStaff) {
-        return res.status(403).json({ error: 'You do not have permission to delete this project' });
-      }
-
-      db.run('DELETE FROM projects WHERE id = ?', [id], function (err) {
-        if (err) {
-          return res.status(500).json({ error: err.message });
-        }
-        res.json({ message: 'Project deleted successfully' });
-      });
+    db.run('DELETE FROM Projeto WHERE id_projeto = ?', [id], function (err) {
+      if (err) return res.status(500).json({ error: err.message });
+      if (this.changes === 0) return res.status(404).json({ error: 'Projeto não encontrado' });
+      res.json({ message: 'Projeto excluído com sucesso' });
     });
   }
 };

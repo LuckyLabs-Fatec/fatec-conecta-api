@@ -1,142 +1,133 @@
 const db = require('../config/database');
 
 const ideaController = {
-  // Create a new idea (only Community users)
+  // Create a new proposta (proposal) - only Community users
   create: (req, res) => {
-    const { title, description } = req.body;
-    const userId = req.session.userId;
+    const { titulo, descricao, status, anexos } = req.body;
+    const userId = req.session.userId; // maps to Usuario.id_usuario
     const userRole = req.session.userRole;
 
-    // Check if user is Community
     if (userRole !== 'Community') {
-      return res.status(403).json({ error: 'Only Community users can create ideas' });
+      return res.status(403).json({ error: 'Only Community users can create proposals' });
     }
 
     db.run(
-      'INSERT INTO ideas (title, description, user_id) VALUES (?, ?, ?)',
-      [title, description, userId],
+      'INSERT INTO Proposta (titulo, descricao, data_submissao, status, anexos, id_usuario) VALUES (?, ?, DATE("now"), ?, ?, ?)',
+      [titulo, descricao, status || null, anexos || null, userId],
       function (err) {
         if (err) {
           return res.status(500).json({ error: err.message });
         }
-        res.status(201).json({ 
-          message: 'Idea created successfully', 
-          ideaId: this.lastID 
+        res.status(201).json({
+          message: 'Proposta criada com sucesso',
+          id_proposta: this.lastID
         });
       }
     );
   },
 
-  // Get all ideas
+  // Get all propostas
   getAll: (req, res) => {
     db.all(
-      `SELECT ideas.*, users.username, users.role 
-       FROM ideas 
-       JOIN users ON ideas.user_id = users.id`,
+      `SELECT p.*, u.nome as usuario_nome, u.perfil as usuario_perfil
+       FROM Proposta p
+       JOIN Usuario u ON p.id_usuario = u.id_usuario`,
       [],
-      (err, ideas) => {
+      (err, rows) => {
         if (err) {
           return res.status(500).json({ error: err.message });
         }
-        res.json(ideas);
+        res.json(rows);
       }
     );
   },
 
-  // Get idea by ID
+  // Get proposta by ID
   getById: (req, res) => {
-    const { id } = req.params;
+    const { id } = req.params; // id_proposta
 
     db.get(
-      `SELECT ideas.*, users.username, users.role 
-       FROM ideas 
-       JOIN users ON ideas.user_id = users.id 
-       WHERE ideas.id = ?`,
+      `SELECT p.*, u.nome as usuario_nome, u.perfil as usuario_perfil
+       FROM Proposta p
+       JOIN Usuario u ON p.id_usuario = u.id_usuario
+       WHERE p.id_proposta = ?`,
       [id],
-      (err, idea) => {
+      (err, row) => {
         if (err) {
           return res.status(500).json({ error: err.message });
         }
-        if (!idea) {
-          return res.status(404).json({ error: 'Idea not found' });
+        if (!row) {
+          return res.status(404).json({ error: 'Proposta não encontrada' });
         }
-        res.json(idea);
+        res.json(row);
       }
     );
   },
 
-  // Update idea
+  // Update proposta (only owner)
   update: (req, res) => {
-    const { id } = req.params;
-    const { title, description } = req.body;
+    const { id } = req.params; // id_proposta
+    const { titulo, descricao, status, anexos } = req.body;
     const userId = req.session.userId;
 
-    // First, check if the idea belongs to the user
-    db.get('SELECT * FROM ideas WHERE id = ?', [id], (err, idea) => {
+    db.get('SELECT * FROM Proposta WHERE id_proposta = ?', [id], (err, proposta) => {
       if (err) {
         return res.status(500).json({ error: err.message });
       }
-      if (!idea) {
-        return res.status(404).json({ error: 'Idea not found' });
+      if (!proposta) {
+        return res.status(404).json({ error: 'Proposta não encontrada' });
       }
-      if (idea.user_id !== userId) {
-        return res.status(403).json({ error: 'You can only update your own ideas' });
+      if (proposta.id_usuario !== userId) {
+        return res.status(403).json({ error: 'Você só pode atualizar suas próprias propostas' });
       }
 
-      let updateFields = [];
-      let values = [];
+      const updateFields = [];
+      const values = [];
 
-      if (title) {
-        updateFields.push('title = ?');
-        values.push(title);
-      }
-      if (description) {
-        updateFields.push('description = ?');
-        values.push(description);
-      }
+      if (titulo !== undefined) { updateFields.push('titulo = ?'); values.push(titulo); }
+      if (descricao !== undefined) { updateFields.push('descricao = ?'); values.push(descricao); }
+      if (status !== undefined) { updateFields.push('status = ?'); values.push(status); }
+      if (anexos !== undefined) { updateFields.push('anexos = ?'); values.push(anexos); }
 
       if (updateFields.length === 0) {
         return res.status(400).json({ error: 'No fields to update' });
       }
 
-      updateFields.push('updated_at = CURRENT_TIMESTAMP');
       values.push(id);
-
       db.run(
-        `UPDATE ideas SET ${updateFields.join(', ')} WHERE id = ?`,
+        `UPDATE Proposta SET ${updateFields.join(', ')} WHERE id_proposta = ?`,
         values,
         function (err) {
           if (err) {
             return res.status(500).json({ error: err.message });
           }
-          res.json({ message: 'Idea updated successfully' });
+          res.json({ message: 'Proposta atualizada com sucesso' });
         }
       );
     });
   },
 
-  // Delete idea
+  // Delete proposta (only owner)
   delete: (req, res) => {
-    const { id } = req.params;
+    const { id } = req.params; // id_proposta
     const userId = req.session.userId;
 
-    // First, check if the idea belongs to the user
-    db.get('SELECT * FROM ideas WHERE id = ?', [id], (err, idea) => {
+    db.get('SELECT * FROM Proposta WHERE id_proposta = ?', [id], (err, proposta) => {
       if (err) {
         return res.status(500).json({ error: err.message });
       }
-      if (!idea) {
-        return res.status(404).json({ error: 'Idea not found' });
+      if (!proposta) {
+        return res.status(404).json({ error: 'Proposta não encontrada' });
       }
-      if (idea.user_id !== userId) {
-        return res.status(403).json({ error: 'You can only delete your own ideas' });
+      if (proposta.id_usuario !== userId) {
+        return res.status(403).json({ error: 'Você só pode excluir suas próprias propostas' });
       }
 
-      db.run('DELETE FROM ideas WHERE id = ?', [id], function (err) {
+      db.run('DELETE FROM Proposta WHERE id_proposta = ?', [id], function (err) {
         if (err) {
           return res.status(500).json({ error: err.message });
         }
-        res.json({ message: 'Idea deleted successfully' });
+        res.json({ message: 'Proposta excluída com sucesso' });
       });
     });
   }

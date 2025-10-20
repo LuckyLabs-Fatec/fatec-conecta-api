@@ -6,6 +6,10 @@ const db = require('./config/database');
 const userRoutes = require('./routes/userRoutes');
 const ideaRoutes = require('./routes/ideaRoutes');
 const projectRoutes = require('./routes/projectRoutes');
+const courseRoutes = require('./routes/courseRoutes');
+const notificationRoutes = require('./routes/notificationRoutes');
+const feedbackRoutes = require('./routes/feedbackRoutes');
+const projectStudentRoutes = require('./routes/projectStudentRoutes');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -17,8 +21,12 @@ app.use(sessionMiddleware);
 
 // Routes
 app.use('/api/users', userRoutes);
-app.use('/api/ideas', ideaRoutes);
-app.use('/api/projects', projectRoutes);
+app.use('/api/ideas', ideaRoutes); // operates on Proposta table
+app.use('/api/projects', projectRoutes); // operates on Projeto table
+app.use('/api/courses', courseRoutes);
+app.use('/api/notifications', notificationRoutes);
+app.use('/api/feedbacks', feedbackRoutes);
+app.use('/api/project-students', projectStudentRoutes);
 
 // Health check endpoint
 app.get('/', (req, res) => {
@@ -28,7 +36,11 @@ app.get('/', (req, res) => {
     endpoints: {
       users: '/api/users',
       ideas: '/api/ideas',
-      projects: '/api/projects'
+      projects: '/api/projects',
+      courses: '/api/courses',
+      notifications: '/api/notifications',
+      feedbacks: '/api/feedbacks',
+      projectStudents: '/api/project-students'
     }
   });
 });
