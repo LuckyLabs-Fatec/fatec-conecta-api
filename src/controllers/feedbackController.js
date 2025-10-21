@@ -3,7 +3,7 @@ const db = require('../config/database');
 const feedbackController = {
   create: (req, res) => {
     const { comentario, anexos, data, fk_usuario_id_usuario, id_projeto } = req.body;
-    // validate FKs
+    
     db.get('SELECT id_usuario FROM Usuario WHERE id_usuario = ?', [fk_usuario_id_usuario], (e1, u) => {
       if (e1) return res.status(500).json({ error: e1.message });
       if (!u) return res.status(400).json({ error: 'Usuário não encontrado' });

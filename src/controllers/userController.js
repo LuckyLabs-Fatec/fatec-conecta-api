@@ -2,9 +2,9 @@ const bcrypt = require('bcryptjs');
 const db = require('../config/database');
 
 const userController = {
-  // Register a new user into Usuario table
+  // Registrar um novo usuário na tabela Usuario
   register: async (req, res) => {
-    const { username, email, password, role } = req.body; // username maps to nome, role -> perfil
+    const { username, email, password, role } = req.body;
 
     const validRoles = ['Student', 'Community', 'Staff-Admin', 'Staff-Supervisor'];
     if (!validRoles.includes(role)) {
@@ -35,7 +35,7 @@ const userController = {
     }
   },
 
-  // Login using Usuario table (username -> nome)
+  // Login usando a tabela Usuario (username -> nome)
   login: (req, res) => {
     const { username, password } = req.body;
 
@@ -53,7 +53,7 @@ const userController = {
           return res.status(401).json({ error: 'Invalid credentials' });
         }
 
-        // Set session
+          // Definir sessão
         req.session.userId = user.id_usuario;
         req.session.userRole = user.perfil;
         req.session.username = user.nome;
@@ -83,7 +83,7 @@ const userController = {
     });
   },
 
-  // Get all users from Usuario table
+  // Obter todos os usuários da tabela Usuario
   getAll: (req, res) => {
     db.all('SELECT id_usuario, nome, email, perfil FROM Usuario', [], (err, users) => {
       if (err) {
@@ -93,7 +93,7 @@ const userController = {
     });
   },
 
-  // Get user by ID
+  // Obter usuário por ID
   getById: (req, res) => {
     const { id } = req.params;
 
@@ -112,10 +112,10 @@ const userController = {
     );
   },
 
-  // Update user
+  // Atualizar usuário
   update: async (req, res) => {
-    const { id } = req.params; // id_usuario
-    const { username, email, password, role } = req.body; // username -> nome, role -> perfil
+    const { id } = req.params;
+    const { username, email, password, role } = req.body;
 
     if (role) {
       const validRoles = ['Student', 'Community', 'Staff-Admin', 'Staff-Supervisor'];
@@ -173,7 +173,7 @@ const userController = {
     }
   },
 
-  // Delete user
+  // Excluir usuário
   delete: (req, res) => {
     const { id } = req.params;
 

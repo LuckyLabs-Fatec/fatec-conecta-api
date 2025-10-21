@@ -1,10 +1,10 @@
 const db = require('../config/database');
 
 const ideaController = {
-  // Create a new proposta (proposal) - only Community users
+  // Criar uma nova proposta - apenas usuários Community
   create: (req, res) => {
     const { titulo, descricao, status, anexos } = req.body;
-    const userId = req.session.userId; // maps to Usuario.id_usuario
+    const userId = req.session.userId;
     const userRole = req.session.userRole;
 
     if (userRole !== 'Community') {
@@ -26,7 +26,7 @@ const ideaController = {
     );
   },
 
-  // Get all propostas
+  // Obter todas as propostas
   getAll: (req, res) => {
     db.all(
       `SELECT p.*, u.nome as usuario_nome, u.perfil as usuario_perfil
@@ -42,9 +42,9 @@ const ideaController = {
     );
   },
 
-  // Get proposta by ID
+  // Obter proposta por ID
   getById: (req, res) => {
-    const { id } = req.params; // id_proposta
+    const { id } = req.params;
 
     db.get(
       `SELECT p.*, u.nome as usuario_nome, u.perfil as usuario_perfil
@@ -64,9 +64,9 @@ const ideaController = {
     );
   },
 
-  // Update proposta (only owner)
+  // Atualizar proposta (apenas proprietário)
   update: (req, res) => {
-    const { id } = req.params; // id_proposta
+    const { id } = req.params;
     const { titulo, descricao, status, anexos } = req.body;
     const userId = req.session.userId;
 
@@ -107,9 +107,9 @@ const ideaController = {
     });
   },
 
-  // Delete proposta (only owner)
+  // Excluir proposta (apenas proprietário)
   delete: (req, res) => {
-    const { id } = req.params; // id_proposta
+    const { id } = req.params;
     const userId = req.session.userId;
 
     db.get('SELECT * FROM Proposta WHERE id_proposta = ?', [id], (err, proposta) => {

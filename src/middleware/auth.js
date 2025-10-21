@@ -1,4 +1,4 @@
-// Middleware to check if user is authenticated
+// Middleware para verificar se o usuário está autenticado
 const requireAuth = (req, res, next) => {
   if (!req.session.userId) {
     return res.status(401).json({ error: 'Authentication required' });
@@ -6,7 +6,7 @@ const requireAuth = (req, res, next) => {
   next();
 };
 
-// Middleware to check if user has specific role
+// Middleware para verificar se o usuário possui um papel específico
 const requireRole = (...allowedRoles) => {
   return (req, res, next) => {
     if (!req.session.userId) {
@@ -19,7 +19,7 @@ const requireRole = (...allowedRoles) => {
   };
 };
 
-// Middleware to check if user is staff (Admin or Supervisor)
+// Middleware para verificar se o usuário é staff (Admin ou Supervisor)
 const requireStaff = (req, res, next) => {
   if (!req.session.userId) {
     return res.status(401).json({ error: 'Authentication required' });

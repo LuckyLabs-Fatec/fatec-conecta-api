@@ -61,7 +61,7 @@ const projectStudentController = {
         res.json({ message: 'Vínculo atualizado' });
       });
     };
-    // validate fks if provided
+
     if (fk_projeto_id_projeto !== undefined) {
       db.get('SELECT id_projeto FROM Projeto WHERE id_projeto = ?', [fk_projeto_id_projeto], (e1, p) => {
         if (e1) return res.status(500).json({ error: e1.message });

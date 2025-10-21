@@ -3,7 +3,6 @@ const router = express.Router();
 const projectController = require('../controllers/projectController');
 const { requireAuth } = require('../middleware/auth');
 
-// All project routes require authentication
 router.post('/', requireAuth, projectController.create);
 router.get('/', requireAuth, projectController.getAll);
 router.get('/:id', requireAuth, projectController.getById);

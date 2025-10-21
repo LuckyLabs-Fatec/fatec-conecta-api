@@ -3,7 +3,6 @@ const db = require('../config/database');
 const notificationController = {
   create: (req, res) => {
     const { mensagem, id_usuario, dataNotif } = req.body;
-    // validate user exists
     db.get('SELECT id_usuario FROM Usuario WHERE id_usuario = ?', [id_usuario], (err, user) => {
       if (err) return res.status(500).json({ error: err.message });
       if (!user) return res.status(400).json({ error: 'Usuário não encontrado' });

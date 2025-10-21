@@ -1,7 +1,7 @@
 const db = require('../config/database');
 
 const projectController = {
-  // Create a new Projeto (staff only). Requires fk_curso_id_curso and fk_proposta_id_proposta
+  // Criar um novo Projeto (apenas staff).
   create: (req, res) => {
     const { titulo, descricao, prazo, status, feedback, fk_curso_id_curso, fk_proposta_id_proposta } = req.body;
     const userRole = req.session.userRole;
@@ -32,7 +32,7 @@ const projectController = {
     });
   },
 
-  // Get all projetos with joins to Curso and Proposta
+  // Obter todos os projetos com joins para Curso e Proposta
   getAll: (req, res) => {
     db.all(
       `SELECT pj.*, c.nome as curso_nome, pr.titulo as proposta_titulo
@@ -47,7 +47,7 @@ const projectController = {
     );
   },
 
-  // Get projeto by id
+  // Obter projeto por id
   getById: (req, res) => {
     const { id } = req.params;
     db.get(
@@ -65,7 +65,7 @@ const projectController = {
     );
   },
 
-  // Update projeto (staff only)
+  // Atualizar projeto (apenas staff)
   update: (req, res) => {
     const { id } = req.params;
     const { titulo, descricao, prazo, status, feedback, fk_curso_id_curso, fk_proposta_id_proposta } = req.body;
@@ -128,7 +128,7 @@ const projectController = {
     });
   },
 
-  // Delete projeto (staff only)
+  // Excluir projeto (apenas staff)
   delete: (req, res) => {
     const { id } = req.params;
     const userRole = req.session.userRole;

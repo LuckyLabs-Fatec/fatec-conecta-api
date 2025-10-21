@@ -1,8 +1,9 @@
 const express = require('express');
 const sessionMiddleware = require('./config/session');
 const db = require('./config/database');
+const csrf = require('csurf');
 
-// Import routes
+// Importar rotas
 const userRoutes = require('./routes/userRoutes');
 const ideaRoutes = require('./routes/ideaRoutes');
 const projectRoutes = require('./routes/projectRoutes');
@@ -13,22 +14,23 @@ const projectStudentRoutes = require('./routes/projectStudentRoutes');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
+app.use(csrf({ cookie: true }));
 
-// Middleware
+// Middlewares
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(sessionMiddleware);
 
-// Routes
+// Rotas
 app.use('/api/users', userRoutes);
-app.use('/api/ideas', ideaRoutes); // operates on Proposta table
-app.use('/api/projects', projectRoutes); // operates on Projeto table
+app.use('/api/ideas', ideaRoutes); 
+app.use('/api/projects', projectRoutes); 
 app.use('/api/courses', courseRoutes);
 app.use('/api/notifications', notificationRoutes);
 app.use('/api/feedbacks', feedbackRoutes);
 app.use('/api/project-students', projectStudentRoutes);
 
-// Health check endpoint
+// Endpoint de verificação (health check)
 app.get('/', (req, res) => {
   res.json({ 
     message: 'Fatec Conecta API',
@@ -45,13 +47,13 @@ app.get('/', (req, res) => {
   });
 });
 
-// Error handling middleware
+// Middleware de tratamento de erros
 app.use((err, req, res, next) => {
   console.error(err.stack);
   res.status(500).json({ error: 'Something went wrong!' });
 });
 
-// Start server
+// Iniciar servidor
 app.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}`);
 });
