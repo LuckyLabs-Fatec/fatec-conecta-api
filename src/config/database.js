@@ -3,8 +3,8 @@ const { Pool } = require('pg');
 const pool = new Pool({
   host: process.env.PGHOST || process.env.DB_HOST || 'localhost',
   port: Number(process.env.PGPORT || process.env.DB_PORT || 5432),
-  database: process.env.PGDATABASE || process.env.DB_NAME || 'appdb',
-  user: process.env.PGUSER || process.env.DB_USER || 'app',
+  database: process.env.PGDATABASE || process.env.DB_NAME || 'fatec-conecta',
+  user: process.env.PGUSER || process.env.DB_USER || 'dev',
   password: process.env.PGPASSWORD || process.env.DB_PASS || 'secret',
 });
 
