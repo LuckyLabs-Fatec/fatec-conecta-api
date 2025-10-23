@@ -1,0 +1,22 @@
+version: "3.8"
+services:
+  db:
+    image: postgres:18
+    environment:
+      POSTGRES_USER: dev
+      POSTGRES_PASSWORD: secret
+      POSTGRES_DB: fatec-conecta
+    ports:
+      - "5432:5432"
+
+  populate:
+    build: ./python-populate
+    depends_on:
+      - db
+    environment:
+      DB_HOST: db
+      DB_PORT: 5432
+      DB_NAME: fatec-conecta
+      DB_USER: dev
+      DB_PASS: secret
+    restart: "no"
