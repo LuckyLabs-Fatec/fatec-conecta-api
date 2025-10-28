@@ -9,10 +9,9 @@ fake = Faker("pt_BR")
 
 DB_HOST = os.getenv("DB_HOST", os.getenv("PGHOST", "db"))
 DB_PORT = int(os.getenv("DB_PORT", os.getenv("PGPORT", 5432)))
-DB_NAME = os.getenv("DB_NAME", os.getenv("PGDATABASE", "appdb"))
-DB_USER = os.getenv("DB_USER", os.getenv("PGUSER", "app"))
+DB_NAME = os.getenv("DB_NAME", os.getenv("PGDATABASE", "fatec-conecta"))
+DB_USER = os.getenv("DB_USER", os.getenv("PGUSER", "dev"))
 DB_PASS = os.getenv("DB_PASS", os.getenv("PGPASSWORD", "secret"))
-
 
 def wait_for_db(retries=30, delay=1):
     for i in range(retries):
@@ -26,19 +25,19 @@ def wait_for_db(retries=30, delay=1):
             time.sleep(delay)
     raise RuntimeError("DB não ficou disponível a tempo")
 
-
 def fetch_ids(cur, table, id_col):
     cur.execute(f"SELECT {id_col} FROM {table};")
     return [r[0] for r in cur.fetchall()]
 
-
 def bulk_insert_usuarios(conn, n=100):
     usuarios = []
     for _ in range(n):
-        nome = fake.name()
-        email = fake.unique.email()
-        senha = fake.password(length=10)
-        perfil = fake.random_element(elements=["aluno", "professor", "coordenador", None])
+        nome = fake.name()[:50]
+        email = fake.unique.email()[:100]
+        senha = fake.password(length=10)[:30]
+        perfil = fake.random_element(
+            elements=["Administrador", "Supervisor", "Mediador", "Aluno", "Comunidade"]
+        )
         usuarios.append((nome, email, senha, perfil))
     with conn.cursor() as cur:
         sql = "INSERT INTO Usuario (nome, email, senha, perfil) VALUES %s RETURNING id_usuario;"
@@ -52,7 +51,7 @@ def bulk_insert_usuarios(conn, n=100):
 def bulk_insert_cursos(conn, n=10):
     cursos = []
     for _ in range(n):
-        nome = f"Curso de {fake.job()}"
+        nome = f"Curso de {fake.job()}"[:60]
         descricao = fake.sentence(nb_words=8)
         cursos.append((nome, descricao))
     with conn.cursor() as cur:
@@ -70,7 +69,7 @@ def bulk_insert_propostas(conn, user_ids, n=1000):
     propostas = []
     today = date.today()
     for _ in range(n):
-        titulo = fake.sentence(nb_words=4)
+        titulo = fake.sentence(nb_words=4)[:100]
         descricao = fake.paragraph(nb_sentences=3)
         data_sub = today - timedelta(days=fake.random_int(min=0, max=120))
         status = fake.random_element(elements=["Nova", "Em análise", "Aprovada", "Rejeitada"]) 
@@ -95,17 +94,18 @@ def bulk_insert_projetos(conn, curso_ids, proposta_ids, n=200):
     projetos = []
     today = date.today()
     for _ in range(n):
-        titulo = fake.sentence(nb_words=3)
+        titulo = fake.sentence(nb_words=3)[:100]
         descricao = fake.paragraph(nb_sentences=2)
         prazo = today + timedelta(days=fake.random_int(min=15, max=180))
         status = fake.random_element(elements=["Aberto", "Em andamento", "Concluído", "Em atraso"]) 
-        feedback = fake.sentence(nb_words=6)
+        anexos = None
+        id_feedback = None
         fk_curso = fake.random_element(elements=curso_ids)
         fk_proposta = fake.random_element(elements=proposta_ids)
-        projetos.append((titulo, descricao, prazo, status, feedback, fk_curso, fk_proposta))
+        projetos.append((titulo, descricao, prazo, status, anexos, id_feedback, fk_curso, fk_proposta))
     with conn.cursor() as cur:
         sql = (
-            "INSERT INTO Projeto (titulo, descricao, prazo, status, feedback, fk_curso_id_curso, fk_proposta_id_proposta) "
+            "INSERT INTO Projeto (titulo, descricao, prazo, status, anexos, id_feedback, fk_curso_id_curso, fk_proposta_id_proposta) "
             "VALUES %s RETURNING id_projeto;"
         )
         execute_values(cur, sql, projetos)
@@ -158,7 +158,7 @@ def bulk_insert_projeto_aluno(conn, projeto_ids, user_ids, pairs=120):
     if not rels:
         return []
     with conn.cursor() as cur:
-        sql = "INSERT INTO Projeto_Aluno (fk_projeto_id_projeto, id_usuario) VALUES %s RETURNING idprojetoaluno;"
+        sql = "INSERT INTO Projeto_Aluno (fk_projeto_id_projeto, id_usuario) VALUES %s RETURNING id_projeto_aluno;"
         execute_values(cur, sql, rels)
         ids = [r[0] for r in cur.fetchall()]
     conn.commit()
@@ -187,7 +187,9 @@ def bulk_insert_notificacoes(conn, user_ids, n=120):
 
 def main():
     wait_for_db()
-    conn = psycopg2.connect(host=DB_HOST, port=DB_PORT, dbname=DB_NAME, user=DB_USER, password=DB_PASS)
+    conn = psycopg2.connect(
+        host=DB_HOST, port=DB_PORT, dbname=DB_NAME, user=DB_USER, password=DB_PASS
+        )
     try:
         user_ids = bulk_insert_usuarios(conn, n=100)
         curso_ids = bulk_insert_cursos(conn, n=10)
