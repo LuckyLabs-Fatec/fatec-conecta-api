@@ -26,6 +26,7 @@ CREATE TABLE IF NOT EXISTS Usuario (
   nome VARCHAR(50) NOT NULL,
   email VARCHAR(100) UNIQUE NOT NULL,
   senha VARCHAR(30) NOT NULL,
+  ativo BOOLEAN NOT NULL DEFAULT TRUE,
   perfil VARCHAR(15) NOT NULL
     CHECK (perfil IN ('Administrador', 'Supervisor', 'Mediador', 'Aluno', 'Comunidade'))
 );

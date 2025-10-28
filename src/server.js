@@ -1,7 +1,6 @@
 const express = require('express');
 const sessionMiddleware = require('./config/session');
 const db = require('./config/database');
-// const csrf = require('csurf');
 
 // Importar rotas
 const userRoutes = require('./routes/userRoutes');
@@ -14,7 +13,6 @@ const projectStudentRoutes = require('./routes/projectStudentRoutes');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
-// app.use(csrf({ cookie: true }));
 
 // Middlewares
 app.use(express.json());
