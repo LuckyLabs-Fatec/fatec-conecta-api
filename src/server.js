@@ -12,7 +12,7 @@ const feedbackRoutes = require('./routes/feedbackRoutes');
 const projectStudentRoutes = require('./routes/projectStudentRoutes');
 
 const app = express();
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 3003;
 
 // Middlewares
 app.use(express.json());
