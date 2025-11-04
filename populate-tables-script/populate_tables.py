@@ -73,7 +73,7 @@ def bulk_insert_propostas(conn, user_ids, n=1000):
         descricao = fake.paragraph(nb_sentences=3)
         data_sub = today - timedelta(days=fake.random_int(min=0, max=120))
         status = fake.random_element(elements=["Nova", "Em análise", "Aprovada", "Rejeitada"]) 
-        anexos = None
+        anexos = fake.file_name(extension='pdf')
         id_usuario = fake.random_element(elements=user_ids)
         propostas.append((titulo, descricao, data_sub, status, anexos, id_usuario))
     with conn.cursor() as cur:
@@ -98,7 +98,7 @@ def bulk_insert_projetos(conn, curso_ids, proposta_ids, n=200):
         descricao = fake.paragraph(nb_sentences=2)
         prazo = today + timedelta(days=fake.random_int(min=15, max=180))
         status = fake.random_element(elements=["Aberto", "Em andamento", "Concluído", "Em atraso"]) 
-        anexos = None
+        anexos = fake.file_name(extension='pdf')
         id_feedback = None
         fk_curso = fake.random_element(elements=curso_ids)
         fk_proposta = fake.random_element(elements=proposta_ids)
@@ -122,7 +122,7 @@ def bulk_insert_feedbacks(conn, user_ids, projeto_ids, n=150):
     today = date.today()
     for _ in range(n):
         comentario = fake.sentence(nb_words=10)
-        anexos = None
+        anexos = fake.file_name(extension='pdf')
         data_fb = today - timedelta(days=fake.random_int(min=0, max=60))
         fk_usuario = fake.random_element(elements=user_ids)
         id_projeto = fake.random_element(elements=projeto_ids)

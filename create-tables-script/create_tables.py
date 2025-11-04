@@ -44,7 +44,7 @@ CREATE TABLE IF NOT EXISTS Proposta (
   descricao TEXT NOT NULL,
   data_submissao DATE NOT NULL DEFAULT CURRENT_DATE,
   status VARCHAR(50) NOT NULL,
-  anexos BYTEA,
+  anexos TEXT,
   id_usuario INTEGER NOT NULL REFERENCES Usuario(id_usuario) ON DELETE CASCADE
 );
 
@@ -60,8 +60,7 @@ CREATE TABLE IF NOT EXISTS Projeto (
   descricao TEXT NOT NULL,
   prazo DATE,
   status VARCHAR(50) NOT NULL,
-  anexos BYTEA,
-  id_feedback INTEGER REFERENCES Feedback(id_feedback) ON DELETE SET NULL,
+  anexos TEXT,
   fk_curso_id_curso INTEGER NOT NULL REFERENCES Curso(id_curso) ON DELETE CASCADE,
   fk_proposta_id_proposta INTEGER NOT NULL REFERENCES Proposta(id_proposta) ON DELETE CASCADE
 );
@@ -69,7 +68,7 @@ CREATE TABLE IF NOT EXISTS Projeto (
 CREATE TABLE IF NOT EXISTS Feedback ( 
   id_feedback SERIAL PRIMARY KEY,
   comentario TEXT,
-  anexos BYTEA,
+  anexos TEXT,
   data DATE NOT NULL DEFAULT CURRENT_DATE,
   fk_usuario_id_usuario INTEGER NOT NULL REFERENCES Usuario(id_usuario) ON DELETE CASCADE,
   id_projeto INTEGER NOT NULL REFERENCES Projeto(id_projeto) ON DELETE CASCADE
@@ -80,6 +79,8 @@ CREATE TABLE IF NOT EXISTS Projeto_Aluno (
   fk_projeto_id_projeto INTEGER NOT NULL REFERENCES Projeto(id_projeto) ON DELETE CASCADE,
   id_usuario INTEGER NOT NULL REFERENCES Usuario(id_usuario) ON DELETE CASCADE
 );
+
+ALTER TABLE Projeto ADD COLUMN id_feedback INTEGER REFERENCES Feedback(id_feedback) ON DELETE SET NULL;
 """
 
 def create_schema():
