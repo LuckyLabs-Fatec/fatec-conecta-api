@@ -10,18 +10,6 @@ services:
     volumes:
       - ./.initdb:/docker-entrypoint-initdb.d
 
-  # create-tables:
-  #   build: ./create-tables-script
-  #   depends_on:
-  #     - db
-  #   environment:
-  #     DB_HOST: db
-  #     DB_PORT: 5432
-  #     DB_NAME: fatec-conecta
-  #     DB_USER: dev
-  #     DB_PASS: secret
-  #   restart: "no"
-
   populate-tables:
     build: ./populate-tables-script
     depends_on:
