@@ -11,7 +11,7 @@ services:
       - ./.initdb:/docker-entrypoint-initdb.d
 
   populate-tables:
-    build: ./populate-tables-script
+    build: ./scripts/populate-tables-script
     depends_on:
       - db
     environment:

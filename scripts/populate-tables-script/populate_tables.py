@@ -25,10 +25,6 @@ def wait_for_db(retries=30, delay=1):
             time.sleep(delay)
     raise RuntimeError("DB não ficou disponível a tempo")
 
-def fetch_ids(cur, table, id_col):
-    cur.execute(f"SELECT {id_col} FROM {table};")
-    return [r[0] for r in cur.fetchall()]
-
 def bulk_insert_usuarios(conn, n=100):
     usuarios = []
     for _ in range(n):
@@ -200,7 +196,6 @@ def main():
         bulk_insert_notificacoes(conn, user_ids=user_ids, n=120)
     finally:
         conn.close()
-
 
 if __name__ == "__main__":
     main()
