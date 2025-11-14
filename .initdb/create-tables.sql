@@ -3,6 +3,8 @@ CREATE TABLE IF NOT EXISTS Usuario
     id_usuario SERIAL PRIMARY KEY,
     nome       VARCHAR(50)         NOT NULL,
     email      VARCHAR(100) UNIQUE NOT NULL,
+    telefone   VARCHAR(15)         NOT NULL,
+    telefone_is_whats BOOLEAN         NOT NULL DEFAULT FALSE,
     senha      VARCHAR(30)         NOT NULL,
     ativo      BOOLEAN             NOT NULL DEFAULT TRUE,
     perfil     VARCHAR(15)         NOT NULL
@@ -23,6 +25,9 @@ CREATE TABLE IF NOT EXISTS Proposta
     titulo         VARCHAR(100) NOT NULL,
     descricao      TEXT         NOT NULL,
     data_submissao DATE         NOT NULL DEFAULT CURRENT_DATE,
+    telefone_contato_opcional VARCHAR(15),
+    telefone_contato_opcional_is_whats BOOLEAN NOT NULL DEFAULT FALSE,
+    email_contato_opcional    VARCHAR(100),
     status         VARCHAR(50)  NOT NULL,
     anexos         TEXT,
     id_usuario     INTEGER      NOT NULL REFERENCES Usuario (id_usuario) ON DELETE CASCADE
